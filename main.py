@@ -13,7 +13,11 @@ from bdtools.norm import norm_pct
 
 # skimage
 from skimage.draw import line
-from skimage.morphology import binary_dilation, disk
+
+# matplotlib
+import matplotlib as mpl
+import matplotlib.pyplot as plt 
+from matplotlib.gridspec import GridSpec
 
 #%% Initialize ----------------------------------------------------------------
 
@@ -167,11 +171,108 @@ def get_klt_display(arr, klt_data):
         
     return klt_display
 
+def plot_klt(klt_data):
+    
+    # Data
+    
+    num = klt_data["n"]
+    tp = len(klt_data["n"])
+    nmax = klt_data["feat_params"]["maxCorners"]
+    spd = [np.nanmean(klt_data["norm"][t]) for t in range(tp)]
+    dy_avg = [np.nanmean(klt_data["dy"][t]) for t in range(tp)]
+    dx_avg = [np.nanmean(klt_data["dx"][t]) for t in range(tp)]
+    dy_avg_cum = np.nancumsum(dy_avg, axis=0) 
+    dx_avg_cum = np.nancumsum(dx_avg, axis=0) 
+    
+    # Create figure
+
+    fig = plt.figure(figsize=(3, 3), layout="tight")
+    gs = GridSpec(2, 2, figure=fig)
+    
+    # rcParams
+       
+    mpl.rcParams.update({
+    
+    "font.family": "Consolas",
+    "font.size": 4,
+    "axes.labelsize": 6,
+    "axes.titlesize": 8,
+    "axes.titlepad": 6,
+    "legend.fontsize": 6,
+    "xtick.labelsize": 6,
+    "ytick.labelsize": 6,
+    "xtick.color": "black",
+    "ytick.color": "black",
+    
+    "axes.linewidth"   : 0.50,
+    "xtick.major.width": 0.25, 
+    "ytick.major.width": 0.25, 
+    "xtick.minor.width": 0.25, 
+    "ytick.minor.width": 0.25, 
+    
+    "savefig.dpi": 300,
+    "savefig.transparent": False,
+    
+    })
+    
+    # Track number ------------------------------------------------------------
+
+    # Plot
+    ax_num = fig.add_subplot(gs[0, 0]) 
+    ax_num.plot(num, linewidth=0.5)
+    ax_num.axhline(y=nmax, linewidth=0.5, linestyle="--", color="k") 
+
+    # Format
+    ax_num.set_title("Track number")
+    ax_num.set_ylim(0, nmax * 1.1)
+    ax_num.set_ylabel("Number")
+    ax_num.set_xlabel("Timepoint")
+    
+    # Average track speed -----------------------------------------------------
+
+    # Plot
+    ax_spd = fig.add_subplot(gs[0, 1]) 
+    ax_spd.plot(spd, linewidth=0.5)
+    
+    # Format
+    ax_spd.set_title("Avg. track speed")
+    ax_spd.set_ylim(0, np.nanmax(spd) * 1.1)
+    ax_spd.set_ylabel("Speed (pix.tp-1)")
+    ax_spd.set_xlabel("Timepoint")
+    
+    # Average dy/dx -----------------------------------------------------------
+    
+    # Plot
+    ax_dyx = fig.add_subplot(gs[1, 0]) 
+    ax_dyx.plot(dy_avg, linewidth=0.5, label="dy")
+    ax_dyx.plot(dx_avg, linewidth=0.5, label="dx")
+    ax_dyx.axhline(y=0, linewidth=0.5, linestyle="--", color="k") 
+    
+    # Format
+    ax_dyx.set_title("Avg. dy/dx")
+    ax_dyx.set_ylabel("Speed (pix.tp-1)")
+    ax_dyx.set_xlabel("Timepoint")
+    ax_dyx.legend(loc="lower left")
+    
+    # Cumulative average dy/dx ------------------------------------------------
+
+    # Plot
+    ax_cyx = fig.add_subplot(gs[1, 1]) 
+    ax_cyx.plot(dy_avg_cum, linewidth=0.5, label="cum_dy")
+    ax_cyx.plot(dx_avg_cum, linewidth=0.5, label="cum_dx")
+    ax_cyx.axhline(y=0, linewidth=0.5, linestyle="--", color="k")
+    
+    # Format
+    ax_cyx.set_title("Cum. avg. dy/dx")
+    ax_cyx.set_ylabel("Speed (pix.tp-1)")
+    ax_cyx.set_xlabel("Timepoint")
+    ax_cyx.legend(loc="lower left")
+
 #%% Execute -------------------------------------------------------------------
 
 if __name__ == "__main__":
 
-    mov_idx = 3
+    mov_idx = 28
     tmax = 75
         
     # -------------------------------------------------------------------------
@@ -203,127 +304,26 @@ if __name__ == "__main__":
     klt_display = get_klt_display(mov, klt_data)
     t1 = time.time()
     print(f"{t1 - t0:.3f}s")
+    
+    # 
+    plot_klt(klt_data)
         
-    # # Display
-    # viewer = napari.Viewer()
-    # viewer.add_image(mov, opacity=0.5)
-    # viewer.add_image(klt_display["coords"], blending='additive')
-    # viewer.add_image(klt_display["tracks"], blending='additive')
+    # Display
+    viewer = napari.Viewer()
+    viewer.add_image(
+        mov, name="mov", visible=1,
+        opacity=0.75
+        )
+    viewer.add_image(
+        klt_display["coords"], name="coords", visible=1,
+        blending='additive'
+        )
+    viewer.add_image(
+        klt_display["tracks"], name="tracks", visible=1,
+        blending='additive'
+        )
     
 #%%
     
-    import matplotlib as mpl
-    from matplotlib.gridspec import GridSpec
-    
-    # -------------------------------------------------------------------------
-        
-    # Create figure
 
-    fig = plt.figure(figsize=(3, 3), layout="tight")
-    gs = GridSpec(2, 2, figure=fig)
-       
-    # Track number ------------------------------------------------------------
-    
-    # Init    
-    num = klt_data["n"]
-    nmax = klt_data["feat_params"]["maxCorners"]
-
-    # Plot
-    ax_num = fig.add_subplot(gs[0, 0]) 
-    ax_num.plot(num, linewidth=0.5)
-    ax_num.axhline(y=nmax, linewidth=0.5, linestyle="--", color="k") 
-
-    # Format
-    ax_num.set_title("Track number")
-    ax_num.set_ylim(0, nmax * 1.1)
-    
-    # Average track speed -----------------------------------------------------
-    
-    # Init    
-    spd = [
-        np.nanmean(klt_data["norm"][t]) 
-        for t in range(len(klt_data["n"]))
-        ]
-    
-    # Plot
-    ax_spd = fig.add_subplot(gs[0, 1]) 
-    ax_spd.plot(spd, linewidth=0.5)
-    
-    # Format
-    ax_spd.set_title("Average track speed")
-    ax_spd.set_ylim(0, np.nanmax(spd) * 1.1)
-    
-    # # Top row -----------------------------------------------------------------
-    
-    # # Cumulative Pulse Area
-    # ax_acum = fig.add_subplot(gs[0, :2]) 
-    # ax_acum.set_title("Cumulative Pulse Area")
-    # dat_acum = data["acum"]
-    # ax_acum.plot(dat_acum, linewidth=0.5)
-    # for tp in range(1, len(tps)):
-    #     ax_acum.axvspan(tpf[tp - 1], tpf[tp], ymin=0, ymax=0.03,
-    #                     facecolor=cmap(tp - 1), alpha=1)
-    # ax_acum.set_ylabel("Cumulative Pulse Area (pixels)")
-    # ax_acum.set_xlabel("Time (s)")
-    # ax_acum.set_ylim(-0.02, 0.3)
-    # ax_acum.xaxis.set_major_formatter(
-    #     ticker.FuncFormatter(lambda x, _: f"{int(x / fr)}")
-    #     )
-        
-    # # Pulse Frequency
-    # ax_freq = fig.add_subplot(gs[0, 2]) 
-    # ax_freq.set_title("Pulse Frequency")
-    # dat_freq = data["tmax_cat"]
-    # for tp in range(1, len(tps)):
-    #     ax_freq.bar(vlabels[tp - 1], dat_freq[tp - 1], color=cmap(tp - 1))
-    # ax_freq.set_ylabel("Pulse Number (min-1)")
-    # ax_freq.set_xlabel("Time Categories (s)")
-    
-    # # Bottom row --------------------------------------------------------------    
-        
-    # # Area
-    # ax_area = fig.add_subplot(gs[1, 0]) 
-    # ax_area.set_title("Pulse Area (cat.)")
-    # dat_area = data["area_cat_stat"]
-    # for tp in range(1, len(tps)):
-    #     ax_area.bar(
-    #         vlabels[tp - 1], dat_area[tp - 1]["avg"], 
-    #         yerr=dat_area[tp - 1]["sem"],
-    #         capsize=2, color=cmap(tp - 1),
-    #         error_kw={'elinewidth': 0.5, 'capthick': 0.5}
-    #         )
-    # ax_area.set_ylabel("Pulse Area (pixels)")
-    # ax_area.set_xlabel("Time Categories (s)")
-    # ax_area.set_ylim(0, 3000)
-    
-    # # Duration
-    # ax_tdur = fig.add_subplot(gs[1, 1]) 
-    # ax_tdur.set_title("Pulse Duration (cat.)")
-    # dat_tdur = data["tdur_cat_stat"]
-    # for tp in range(1, len(tps)):
-    #     ax_tdur.bar(
-    #         vlabels[tp - 1], dat_tdur[tp - 1]["avg"], 
-    #         yerr=dat_tdur[tp - 1]["sem"],
-    #         capsize=2, color=cmap(tp - 1),
-    #         error_kw={'elinewidth': 0.5, 'capthick': 0.5}
-    #         )
-    # ax_tdur.set_ylabel("Pulse Duration (s-1)")
-    # ax_tdur.set_xlabel("Time Categories (s)")
-    # ax_tdur.set_ylim(0, 5)
-    
-    # # Intensity
-    # ax_ints = fig.add_subplot(gs[1, 2]) 
-    # ax_ints.set_title("Pulse Intensity (cat.)")
-    # dat_int = data["ints_cat_stat"]
-    # for tp in range(1, len(tps)):
-    #     ax_ints.bar(
-    #         vlabels[tp - 1], dat_int[tp - 1]["avg"], 
-    #         yerr=dat_int[tp - 1]["sem"],
-    #         capsize=2, color=cmap(tp - 1),
-    #         error_kw={'elinewidth': 0.5, 'capthick': 0.5}
-    #         )
-    # ax_ints.set_ylabel("Fluo. Int. Change (s-1)")
-    # ax_ints.set_xlabel("Time Categories (s)")
-    # ax_ints.set_ylim(0, 1.0)
-    
     
