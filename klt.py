@@ -190,48 +190,44 @@ class KLT:
                 img0, img1, f0, None, **self.flow_params
                 )
 
-            # Format outputs
+            # Format data
             error, status, f0, f1 = [
                 x.squeeze() for x in (error, status, f0, f1)]
             
-            # Discard
-            def get_valid(f):
+            # Remove "out of frame" tracks
+            def out_of_frame(f):
                 x, y = f[:, 0], f[:, 1]
                 return (x <= 0) | (x >= self.nX) | (y <= 0) | (y >= self.nY)
-            f0[get_valid(f0)] = np.nan
-            f1[get_valid(f1)] = np.nan
+            f0[out_of_frame(f0)] = np.nan
+            f1[out_of_frame(f1)] = np.nan
             f1[status == 0] = np.nan
             
-            self.f0 = f0
-            self.f1 = f1
-            self.status = status
-            self.error = error
+            # # Measure norm & dyx
+            dy = f1[:, 1] - f0[:, 1]
+            dx = f1[:, 0] - f0[:, 0]
+            norm = np.linalg.norm(f1 - f0, axis=1) 
             
-            # # Measure norm & xy variations
-            # dy = f1[:, 1] - f0[:, 1]
-            # dx = f1[:, 0] - f0[:, 0]
-            # norm = np.linalg.norm(f1 - f0, axis=1) 
-                
-            # # Append klt data
-            # if t == 1:
-            #     nan = np.full_like(status, np.nan)
-            #     self.n.append(np.nansum(f0[:, 1] > 0))
-            #     self.y.append(f0[:, 1])
-            #     self.x.append(f0[:, 0])
-            #     self.dy.append(nan)
-            #     self.dx.append(nan)
-            #     self.norm.append(nan)
-            #     self.status.append(nan)
-            #     self.error.append(nan)
-            # self.n.append(np.nansum(f1[:, 1] > 0))  
-            # self.y.append(f1[:, 1])
-            # self.x.append(f1[:, 0])
-            # self.dy.append(dy)
-            # self.dx.append(dx)
-            # self.norm.append(norm)
-            # self.status.append(status)
-            # self.error.append(error)
-                
+            # Append data
+            if t == 1:
+                zeros = np.full_like(status, 0)
+                nan = np.full_like(error, np.nan)
+                self.n.append(np.nansum(f0[:, 1] > 0))
+                self.y.append(f0[:, 1])
+                self.x.append(f0[:, 0])
+                self.dy.append(nan)
+                self.dx.append(nan)
+                self.norm.append(nan)
+                self.status.append(zeros)
+                self.error.append(nan)
+            self.n.append(np.nansum(f1[:, 1] > 0))  
+            self.y.append(f1[:, 1])
+            self.x.append(f1[:, 0])
+            self.dy.append(dy)
+            self.dx.append(dx)
+            self.norm.append(norm)
+            self.status.append(status)
+            self.error.append(error)
+                            
             # Update previous frame & features 
             img0 = img1
             f0 = f1.reshape(-1, 1, 2)
@@ -280,5 +276,6 @@ if __name__ == "__main__":
     t1 = time.time()
     print(f"{t1 - t0:.3f}s")
 
-    f0, f1, status, error = klt.f0, klt.f1, klt.status, klt.error
-    # y, x, dy, dx = klt.y, klt.x, klt.dy, klt.dx
+    status, error = klt.status, klt.error
+    n, y, x = klt.n, klt.y, klt.x
+    dy, dx, norm = klt.dy, klt.dx, klt.norm
