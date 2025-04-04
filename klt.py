@@ -26,8 +26,8 @@ from matplotlib.gridspec import GridSpec
 
 # Feature detection
 feat_params={
-    "maxCorners"        : 100,
-    "qualityLevel"      : 1e-3,
+    "maxCorners"        : 1000,
+    "qualityLevel"      : 1e-4,
     "minDistance"       : 3,
     "blockSize"         : 3,
     "useHarrisDetector" : True,
@@ -176,6 +176,8 @@ class KLT:
         self.status = []
         self.error  = []
                 
+        # 
+        
         # Get frame & features (t0)
         img0 = self.prp[0, ...]
         f0 = cv2.goodFeaturesToTrack(img0, mask=self.mask, **self.feat_params)
@@ -189,12 +191,12 @@ class KLT:
             f1, status, error = cv2.calcOpticalFlowPyrLK(
                 img0, img1, f0, None, **self.flow_params
                 )
-
+            
             # Format data
             error, status, f0, f1 = [
                 x.squeeze() for x in (error, status, f0, f1)]
-            
-            # Remove "out of frame" tracks
+
+            # Remove "out of frame" features
             def out_of_frame(f):
                 x, y = f[:, 0], f[:, 1]
                 return (x <= 0) | (x >= self.nX) | (y <= 0) | (y >= self.nY)
@@ -202,7 +204,46 @@ class KLT:
             f1[out_of_frame(f1)] = np.nan
             f1[status == 0] = np.nan
             
-            # # Measure norm & dyx
+            # Replace lost features *******************************************
+            
+            lost_idx = np.where(np.isnan(f1[:, 0]))[0]
+            n_lost = len(lost_idx)
+            print(t, n_lost)
+            
+            if n_lost > 0:
+                new_mask = self.mask.copy() if self.mask is not None else None
+                if new_mask is not None:
+                    valid_feats = f1[~np.isnan(f1[:, 0])]
+                    for pt in valid_feats:                        
+                        cv2.circle(
+                            new_mask, 
+                            (int(pt[0]), int(pt[1])), 
+                            int(self.feat_params["minDistance"]), 0, -1)
+                        
+                new_feat_params = self.feat_params.copy()
+                new_feat_params["maxCorners"] = n_lost
+                new_feats = cv2.goodFeaturesToTrack(
+                    img1, mask=self.mask, **new_feat_params)
+                new_feats = new_feats.squeeze()
+            
+                self.new_feats = new_feats
+                new_feats[out_of_frame(new_feats)] = np.nan
+                
+                f1[lost_idx] = new_feats
+            
+            
+                # if new_feats is not None:
+                #     new_feats = new_feats.squeeze()
+                    
+                #     if new_feats.ndim == 1:
+                #         new_feats = new_feats[np.newaxis, :]
+                #     f1[lost_idx] = new_feats
+              
+            # *****************************************************************
+            
+            self.f0, self.f1 = f0, f1
+            
+            # Measure norm & dyx
             dy = f1[:, 1] - f0[:, 1]
             dx = f1[:, 0] - f0[:, 0]
             norm = np.linalg.norm(f1 - f0, axis=1) 
@@ -276,6 +317,9 @@ if __name__ == "__main__":
     t1 = time.time()
     print(f"{t1 - t0:.3f}s")
 
+    f0, f1 = klt.f0, klt.f1
     status, error = klt.status, klt.error
     n, y, x = klt.n, klt.y, klt.x
     dy, dx, norm = klt.dy, klt.dx, klt.norm
+    
+    new_feats = klt.new_feats
