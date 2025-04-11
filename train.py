@@ -12,9 +12,9 @@ from bdtools.models.unet import UNet
 #%% Inputs --------------------------------------------------------------------
 
 # Procedure
-annotate = 0
+annotate = 1
 train = 0
-predict = 1
+predict = 0
 
 # UNet build()
 backbone = "resnet18"
@@ -27,11 +27,11 @@ preview = 0
 # preprocess
 patch_size = 256
 patch_overlap = 0
-img_norm = "image"
+img_norm = "global"
 msk_type = "normal"
 
 # augment
-iterations = 2000
+iterations = 3000
 gamma_p = 0.5
 gblur_p = 0.5
 noise_p = 0.5 
@@ -47,8 +47,8 @@ learning_rate = 0.0005
 patience = 20
 
 # predict
-stk_idx = 32
-model_name = "model_256_normal_2000-55_1"
+stk_idx = 30
+model_name = "model_256_normal_3000-77_1"
 
 #%% Initialize ----------------------------------------------------------------
 

@@ -29,6 +29,7 @@ if __name__ == "__main__":
     img_idxs = np.random.choice(
         np.arange(len(img_paths)), size=n, replace=False)
     
+    pchs = []
     for img_idx in img_idxs:
 
         # Open image
@@ -38,9 +39,15 @@ if __name__ == "__main__":
         # Extract patch
         pch = extract_patches(img, patch_size, 0)
         pch_idx = np.random.randint(len(pch))
+        pchs.append(pch[pch_idx])
         
-        # Save
-        io.imsave(
-            trn_path / (path.stem + f"_{pch_idx:02d}.tif"),
-            pch[pch_idx], check_contrast=False,                          
-            )
+        # # Save
+        # io.imsave(
+        #     trn_path / (path.stem + f"_{pch_idx:02d}.tif"),
+        #     pch[pch_idx], check_contrast=False,                          
+        #     )
+        
+    # Display
+    import napari
+    viewer = napari.Viewer()
+    viewer.add_image(np.stack(pchs))
