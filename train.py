@@ -4,6 +4,7 @@ import napari
 import numpy as np
 from skimage import io
 from pathlib import Path
+import matplotlib.pyplot as plt 
 
 # bdtools
 from bdtools.models.annotate import Annotate
@@ -12,8 +13,8 @@ from bdtools.models.unet import UNet
 #%% Inputs --------------------------------------------------------------------
 
 # Procedure
-annotate = 1
-train = 0
+annotate = 0
+train = 1
 predict = 0
 
 # UNet build()
@@ -27,11 +28,12 @@ preview = 0
 # preprocess
 patch_size = 256
 patch_overlap = 0
-img_norm = "global"
+img_norm = "image"
 msk_type = "normal"
 
 # augment
-iterations = 3000
+iterations = 4000
+invert_p = 0.0
 gamma_p = 0.5
 gblur_p = 0.5
 noise_p = 0.5 
@@ -42,13 +44,14 @@ distord_p = 0.5
 epochs = 100
 batch_size = 8
 validation_split = 0.2
-metric = "soft_dice_coef"
-learning_rate = 0.0005
+# metric = "soft_dice_coef"
+metric = "precision"
+learning_rate = 0.05
 patience = 20
 
 # predict
-stk_idx = 30
-model_name = "model_256_normal_3000-77_1"
+stk_idx = 36
+model_name = "model_256_normal_4000-271_1"
 
 #%% Initialize ----------------------------------------------------------------
 
@@ -73,10 +76,10 @@ if __name__ == "__main__":
                 imgs.append(io.imread(str(path).replace("_mask", "")))
         imgs = np.stack(imgs)
         msks = np.stack(msks)
-         
+                 
         unet = UNet(
             save_name="",
-            load_name="",
+            load_name="model_256_normal_4000-271_1",
             root_path=Path.cwd(),
             backbone=backbone,
             classes=1,
@@ -98,6 +101,7 @@ if __name__ == "__main__":
             
             # Augment
             iterations=iterations,
+            invert_p=invert_p,
             gamma_p=gamma_p, 
             gblur_p=gblur_p, 
             noise_p=noise_p, 
@@ -124,12 +128,15 @@ if __name__ == "__main__":
             return np.stack(stk)
         
         # Load stack
-        stk = load_stack(stk_paths[stk_idx])[:50, 512:1536, 512:1536]
+        stk = load_stack(stk_paths[stk_idx])[:75, 768:1280, 768:1280]
         
         # Predict
         unet = UNet(load_name=model_name)
         prd = unet.predict(stk, verbose=3)
                 
+        # Plot 
+        plt.plot(np.mean(prd, axis=(1, 2)))
+        
         # Display
         viewer = napari.Viewer()
         viewer.add_image(stk)

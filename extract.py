@@ -9,7 +9,7 @@ from bdtools.patch import extract_patches
 
 #%% Inputs --------------------------------------------------------------------
 
-n = 200
+n = 1000
 patch_size = 256
 
 #%% Initialize ----------------------------------------------------------------
@@ -41,13 +41,13 @@ if __name__ == "__main__":
         pch_idx = np.random.randint(len(pch))
         pchs.append(pch[pch_idx])
         
-        # # Save
-        # io.imsave(
-        #     trn_path / (path.stem + f"_{pch_idx:02d}.tif"),
-        #     pch[pch_idx], check_contrast=False,                          
-        #     )
+        # Save
+        io.imsave(
+            trn_path / (path.stem + f"_{pch_idx:02d}.tif"),
+            pch[pch_idx], check_contrast=False,                          
+            )
         
-    # Display
-    import napari
-    viewer = napari.Viewer()
-    viewer.add_image(np.stack(pchs))
+    # # Display
+    # import napari
+    # viewer = napari.Viewer()
+    # viewer.add_image(np.stack(pchs))
