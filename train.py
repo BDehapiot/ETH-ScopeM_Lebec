@@ -14,8 +14,8 @@ from bdtools.models.unet import UNet
 
 # Procedure
 annotate = 0
-train = 1
-predict = 0
+train = 0
+predict = 1
 
 # UNet build()
 backbone = "resnet18"
@@ -33,7 +33,7 @@ msk_type = "normal"
 
 # augment
 iterations = 4000
-invert_p = 0.0
+invert_p = 0.5
 gamma_p = 0.5
 gblur_p = 0.5
 noise_p = 0.5 
@@ -45,8 +45,8 @@ epochs = 100
 batch_size = 8
 validation_split = 0.2
 # metric = "soft_dice_coef"
-metric = "precision"
-learning_rate = 0.05
+metric = "dice_coef"
+learning_rate = 0.001
 patience = 20
 
 # predict
@@ -79,7 +79,7 @@ if __name__ == "__main__":
                  
         unet = UNet(
             save_name="",
-            load_name="model_256_normal_4000-271_1",
+            load_name="",
             root_path=Path.cwd(),
             backbone=backbone,
             classes=1,
