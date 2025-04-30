@@ -51,7 +51,7 @@ def load(stk_path, crop_size=1024):
 
 #%% Function : l5p_fit() ------------------------------------------------------
 
-def l5p_fit(y, plot=True, display=False, save=True):
+def l5p_fit(y, outputs_path, plot=True, display=False, save=True):
 
     # Nested function(s) ------------------------------------------------------
 
@@ -129,6 +129,12 @@ def l5p_fit(y, plot=True, display=False, save=True):
         axis.set_xlim(0, len(y))         
         axis.legend(loc="center right")
         
+        # # Save
+        # plt.tight_layout()
+        # plt.savefig(outputs_path / (plot_stem + ".png"), format="png")
+        # plt.close(fig)
+        # # plt.show()
+        
         return fig
 
     # Execute -----------------------------------------------------------------    
@@ -165,23 +171,23 @@ if __name__ == "__main__":
     print(stk_path)
         
     # Initialize
-    output_name = stk_path.stem.replace("TemporaryImages", "")
-    output_path = stk_path.parent / output_name    
-    if output_path.exists():
-        for item in output_path.iterdir():
+    stk_name = stk_path.stem.replace("TemporaryImages", "")
+    outputs_path = stk_path.parent / "outputs"  
+    if outputs_path.exists():
+        for item in outputs_path.iterdir():
             if item.is_file() or item.is_symlink():
                 item.unlink()
             elif item.is_dir():
                 shutil.rmtree(item)
     else:
-        output_path.mkdir(parents=True, exist_ok=True)
+        outputs_path.mkdir(parents=True, exist_ok=True)
         
-    # Load
-    stk = load(stk_path, crop_size=crop_size)
+    # # Load
+    # stk = load(stk_path, crop_size=crop_size)
     
-    # Predict
-    unet = UNet(load_name=model_name)
-    prd = unet.predict(stk, verbose=3)
+    # # Predict
+    # unet = UNet(load_name=model_name)
+    # prd = unet.predict(stk, verbose=3)
     
     # # Display
     # viewer = napari.Viewer()
@@ -190,10 +196,10 @@ if __name__ == "__main__":
     
 #%%
     
-    # Fit
-    y = np.mean(prd, axis=(1, 2))
-    fit_data, fit_plot = l5p_fit(y)
-    fit_plot.show()
+    # # Fit
+    # y = np.mean(prd, axis=(1, 2))
+    # fit_data, fit_plot = l5p_fit(y)
+    # fit_plot.show()
 
     # # Save
     # io.imsave(
