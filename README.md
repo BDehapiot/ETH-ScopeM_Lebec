@@ -86,9 +86,11 @@ Your prompt should now start with `(lebec)` instead of `(base)`
 
 ## Usage
 
-<img src="utils/example_stk.jpg" alt="example_stk" width="192" />
-<img src="utils/example_prd.jpg" alt="example_prd" width="192" />  
-<img src="utils/example_fit-plot.jpg" alt="example_fit-plot" height="192" />
+<p align="left">
+  <img src="utils/example_stk.jpg" alt="example_stk" width="192" />
+  <img src="utils/example_prd.jpg" alt="example_prd" width="192" />
+  <img src="utils/example_fit-plot.jpg" alt="example_fit-plot" height="192" />
+</p>
 
 ### `main.py`
 
